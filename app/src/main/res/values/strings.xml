@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">StudyPulse</string>
+    <string name="sign_in_tagline">Your smart companion for school routines, assignment deadlines, and focused study sessions.</string>
+    <string name="sign_in_button">Sign in with Google</string>
+    <string name="nav_today">Today</string>
+    <string name="nav_schedule">Schedule</string>
+    <string name="nav_tasks">Tasks</string>
+    <string name="nav_assistant">Study AI</string>
+    <string name="notifications_channel_deadlines">Assignment Deadlines</string>
+    <string name="notifications_channel_sessions">Study Sessions</string>
+    <string name="notifications_channel_routines">Class Routines</string>
+    <string name="notifications_permission_title">Enable Study Reminders</string>
+    <string name="notifications_permission_body">Allow notifications so StudyPulse can alert you before classes, deadlines, and study blocks.</string>
+    <string name="action_enable_notifications">Allow Alerts</string>
+    <string name="action_test_notification">Send Test Alert</string>
+    <string name="error_generic">Something went wrong. Please try again.</string>
+</resources>

@@ -1,0 +1,111 @@
+{
+  "entities": {
+    "RoutineItem": {
+      "title": "RoutineItem",
+      "description": "A recurring weekly school routine or class schedule block.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "title": { "type": "string", "description": "Class or routine title (1-100 chars)" },
+        "subject": { "type": "string", "description": "Subject or course name (0-60 chars)" },
+        "location": { "type": "string", "description": "Room or building (0-80 chars)" },
+        "dayOfWeek": { "type": "integer", "description": "ISO day of week 1 (Mon) to 7 (Sun)" },
+        "startMinuteOfDay": { "type": "integer", "description": "Start time in minutes from midnight (0-1439)" },
+        "durationMinutes": { "type": "integer", "description": "Duration in minutes (5-600)" },
+        "reminderMinutesBefore": { "type": "integer", "description": "Minutes before start to notify (0-1440)" },
+        "reminderEnabled": { "type": "boolean", "description": "Whether notifications are enabled for this routine" },
+        "notes": { "type": "string", "description": "Optional notes (0-500 chars)" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update" }
+      },
+      "required": [
+        "userId",
+        "title",
+        "subject",
+        "location",
+        "dayOfWeek",
+        "startMinuteOfDay",
+        "durationMinutes",
+        "reminderMinutesBefore",
+        "reminderEnabled",
+        "notes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AssignmentItem": {
+      "title": "AssignmentItem",
+      "description": "A school assignment, homework, project, or exam deadline.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "title": { "type": "string", "description": "Assignment title (1-120 chars)" },
+        "subject": { "type": "string", "description": "Subject or course name (0-60 chars)" },
+        "details": { "type": "string", "description": "Assignment notes or instructions (0-1000 chars)" },
+        "dueAtMillis": { "type": "integer", "description": "Deadline epoch milliseconds" },
+        "priority": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"], "description": "Priority level" },
+        "completed": { "type": "boolean", "description": "Whether the assignment is completed" },
+        "reminderMinutesBefore": { "type": "integer", "description": "Minutes before deadline to notify (0-10080)" },
+        "reminderEnabled": { "type": "boolean", "description": "Whether deadline reminder is enabled" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update" }
+      },
+      "required": [
+        "userId",
+        "title",
+        "subject",
+        "details",
+        "dueAtMillis",
+        "priority",
+        "completed",
+        "reminderMinutesBefore",
+        "reminderEnabled",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "StudySession": {
+      "title": "StudySession",
+      "description": "A planned study block or focus session with reminder.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "title": { "type": "string", "description": "Study session title (1-120 chars)" },
+        "subject": { "type": "string", "description": "Subject or topic (0-60 chars)" },
+        "scheduledAtMillis": { "type": "integer", "description": "Scheduled start epoch milliseconds" },
+        "durationMinutes": { "type": "integer", "description": "Planned duration in minutes (5-480)" },
+        "reminderMinutesBefore": { "type": "integer", "description": "Minutes before start to notify (0-1440)" },
+        "reminderEnabled": { "type": "boolean", "description": "Whether session reminder is enabled" },
+        "completed": { "type": "boolean", "description": "Whether the study session is finished" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update" }
+      },
+      "required": [
+        "userId",
+        "title",
+        "subject",
+        "scheduledAtMillis",
+        "durationMinutes",
+        "reminderMinutesBefore",
+        "reminderEnabled",
+        "completed",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/routines/{routineId}": {
+      "schema": { "$ref": "#/entities/RoutineItem" },
+      "description": "User-owned school routines and class schedule blocks."
+    },
+    "/users/{userId}/assignments/{assignmentId}": {
+      "schema": { "$ref": "#/entities/AssignmentItem" },
+      "description": "User-owned assignments and upcoming deadlines."
+    },
+    "/users/{userId}/study_sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/StudySession" },
+      "description": "User-owned planned study sessions."
+    }
+  }
+}

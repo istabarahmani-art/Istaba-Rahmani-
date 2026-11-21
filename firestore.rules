@@ -1,0 +1,165 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidRoutine(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 100 &&
+             data.subject is string && data.subject.size() <= 60 &&
+             data.location is string && data.location.size() <= 80 &&
+             data.dayOfWeek is int && data.dayOfWeek >= 1 && data.dayOfWeek <= 7 &&
+             data.startMinuteOfDay is int && data.startMinuteOfDay >= 0 && data.startMinuteOfDay <= 1439 &&
+             data.durationMinutes is int && data.durationMinutes >= 5 && data.durationMinutes <= 600 &&
+             data.reminderMinutesBefore is int && data.reminderMinutesBefore >= 0 && data.reminderMinutesBefore <= 1440 &&
+             data.reminderEnabled is bool &&
+             data.notes is string && data.notes.size() <= 500 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidAssignment(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.subject is string && data.subject.size() <= 60 &&
+             data.details is string && data.details.size() <= 1000 &&
+             data.dueAtMillis is int && data.dueAtMillis >= 0 &&
+             data.priority in ['LOW', 'MEDIUM', 'HIGH'] &&
+             data.completed is bool &&
+             data.reminderMinutesBefore is int && data.reminderMinutesBefore >= 0 && data.reminderMinutesBefore <= 10080 &&
+             data.reminderEnabled is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidStudySession(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.subject is string && data.subject.size() <= 60 &&
+             data.scheduledAtMillis is int && data.scheduledAtMillis >= 0 &&
+             data.durationMinutes is int && data.durationMinutes >= 5 && data.durationMinutes <= 480 &&
+             data.reminderMinutesBefore is int && data.reminderMinutesBefore >= 0 && data.reminderMinutesBefore <= 1440 &&
+             data.reminderEnabled is bool &&
+             data.completed is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId}/routines/{routineId} {
+      allow get: if isOwner(userId) && isValidId(routineId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(routineId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'title', 'subject', 'location', 'dayOfWeek',
+                         'startMinuteOfDay', 'durationMinutes', 'reminderMinutesBefore',
+                         'reminderEnabled', 'notes', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'title', 'subject', 'location', 'dayOfWeek',
+                         'startMinuteOfDay', 'durationMinutes', 'reminderMinutesBefore',
+                         'reminderEnabled', 'notes', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidRoutine(incoming(), userId);
+      allow update: if isOwner(userId) &&
+                       isValidId(routineId) &&
+                       isValidRoutine(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         incoming().diff(existing()).affectedKeys().hasOnly(['reminderEnabled', 'updatedAt']) ||
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'subject', 'location', 'dayOfWeek', 'startMinuteOfDay',
+                           'durationMinutes', 'reminderMinutesBefore', 'reminderEnabled', 'notes', 'updatedAt'
+                         ])
+                       );
+      allow delete: if isOwner(userId) && isValidId(routineId);
+    }
+
+    match /users/{userId}/assignments/{assignmentId} {
+      allow get: if isOwner(userId) && isValidId(assignmentId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(assignmentId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'title', 'subject', 'details', 'dueAtMillis',
+                         'priority', 'completed', 'reminderMinutesBefore',
+                         'reminderEnabled', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'title', 'subject', 'details', 'dueAtMillis',
+                         'priority', 'completed', 'reminderMinutesBefore',
+                         'reminderEnabled', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidAssignment(incoming(), userId);
+      allow update: if isOwner(userId) &&
+                       isValidId(assignmentId) &&
+                       isValidAssignment(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         incoming().diff(existing()).affectedKeys().hasOnly(['completed', 'updatedAt']) ||
+                         incoming().diff(existing()).affectedKeys().hasOnly(['reminderEnabled', 'updatedAt']) ||
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'subject', 'details', 'dueAtMillis', 'priority',
+                           'completed', 'reminderMinutesBefore', 'reminderEnabled', 'updatedAt'
+                         ])
+                       );
+      allow delete: if isOwner(userId) && isValidId(assignmentId);
+    }
+
+    match /users/{userId}/study_sessions/{sessionId} {
+      allow get: if isOwner(userId) && isValidId(sessionId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(sessionId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'title', 'subject', 'scheduledAtMillis',
+                         'durationMinutes', 'reminderMinutesBefore', 'reminderEnabled',
+                         'completed', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'title', 'subject', 'scheduledAtMillis',
+                         'durationMinutes', 'reminderMinutesBefore', 'reminderEnabled',
+                         'completed', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidStudySession(incoming(), userId);
+      allow update: if isOwner(userId) &&
+                       isValidId(sessionId) &&
+                       isValidStudySession(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         incoming().diff(existing()).affectedKeys().hasOnly(['completed', 'updatedAt']) ||
+                         incoming().diff(existing()).affectedKeys().hasOnly(['reminderEnabled', 'updatedAt']) ||
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'subject', 'scheduledAtMillis', 'durationMinutes',
+                           'reminderMinutesBefore', 'reminderEnabled', 'completed', 'updatedAt'
+                         ])
+                       );
+      allow delete: if isOwner(userId) && isValidId(sessionId);
+    }
+  }
+}
